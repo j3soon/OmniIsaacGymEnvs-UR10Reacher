@@ -1,3 +1,189 @@
+# UR10 Reacher Reinforcement Learning Sim2Real Environment for Omniverse Isaac Gym/Sim
+
+This repository adds a UR10Reacher environment based on [OmniIsaacGymEnvs](https://github.com/NVIDIA-Omniverse/OmniIsaacGymEnvs) (commit [d0eaf2e](https://github.com/NVIDIA-Omniverse/OmniIsaacGymEnvs/tree/d0eaf2e7f1e1e901d62e780392ca77843c08eb2c)), and includes Sim2Real code to control a real-world [UR10](https://www.universal-robots.com/products/ur10-robot/) with the policy learned by reinforcement learning in Omniverse Isaac Gym/Sim.
+
+We target Isaac Sim 2022.1.1 and test the RL code on Windows 10 and Ubuntu 18.04. The Sim2Real code is tested on Linux and a real UR5 CB3 (since we don't have access to a real UR10).
+
+This repo is compatible with [OmniIsaacGymEnvs-DofbotReacher](https://github.com/j3soon/OmniIsaacGymEnvs-DofbotReacher).
+
+## Preview
+
+![](docs/media/UR10Reacher-Vectorized.gif)
+
+![](docs/media/UR10Reacher-Sim2Real.gif)
+
+## Installation
+
+Prerequisites:
+- [Install Omniverse Isaac Sim 2022.1.1](https://docs.omniverse.nvidia.com/app_isaacsim/app_isaacsim/install_basic.html) (Must setup Cache and Nucleus)
+- Your computer & GPU should be able to run the Cartpole example in [OmniIsaacGymEnvs](https://github.com/NVIDIA-Omniverse/OmniIsaacGymEnvs)
+- (Optional) [Set up a UR3/UR5/UR10](https://www.universal-robots.com/products/) in the real world
+
+We will use Anaconda to manage our virtual environment:
+
+1. Clone this repository:
+   ```sh
+   cd ~
+   git clone https://github.com/j3soon/OmniIsaacGymEnvs-UR10Reacher.git
+   ```
+2. Generate [instanceable](https://docs.omniverse.nvidia.com/app_isaacsim/app_isaacsim/tutorial_gym_instanceable_assets.html) UR10 assets for training:
+
+   [Launch the Script Editor](https://docs.omniverse.nvidia.com/app_isaacsim/app_isaacsim/tutorial_gui_interactive_scripting.html#script-editor) in Isaac Sim. Copy the content in `omniisaacgymenvs/utils/usd_utils/create_instanceable_ur10.py` and execute it inside the Script Editor window. Wait until you see the text `Done!`.
+3. (Optional) [Install ROS Melodic for Ubuntu](https://wiki.ros.org/melodic/Installation/Ubuntu) and [Set up a catkin workspace for UR10](https://github.com/UniversalRobots/Universal_Robots_ROS_Driver/blob/master/README.md).
+   
+   Please change all `catkin_ws` in the commands to `ur_ws`, and make sure you can control the robot with `rqt-joint-trajectory-controller`.
+4. [Download and Install Anaconda](https://www.anaconda.com/products/distribution#Downloads).
+   ```sh
+   # For 64-bit (x86_64/x64/amd64/intel64)
+   wget https://repo.anaconda.com/archive/Anaconda3-2022.10-Linux-x86_64.sh
+   bash Anaconda3-2022.10-Linux-x86_64.sh
+   ```
+5. Patch Isaac Sim 2022.1.1
+   ```sh
+   export ISAAC_SIM="$HOME/.local/share/ov/pkg/isaac_sim-2022.1.1"
+   cp ~/OmniIsaacGymEnvs-UR10Reacher/isaac_sim-2022.1.1-patch/setup_python_env.sh $ISAAC_SIM/setup_python_env.sh
+   ```
+   > The patch for Isaac on Windows is slightly more complicated. Please open an issue for the patch details if you are using Windows.
+6. [Set up conda environment for Isaac Sim](https://docs.omniverse.nvidia.com/app_isaacsim/app_isaacsim/install_python.html#advanced-running-with-anaconda)
+   ```sh
+   # conda remove --name isaac-sim --all
+   export ISAAC_SIM="$HOME/.local/share/ov/pkg/isaac_sim-2022.1.1"
+   cd $ISAAC_SIM
+   conda env create -f environment.yml
+   conda activate isaac-sim
+   cd ~/OmniIsaacGymEnvs-UR10Reacher
+   pip install -e .
+   # Below is optional
+   pip install pyyaml rospkg
+   ```
+7. Activate conda & ROS environment
+   ```sh
+   export ISAAC_SIM="$HOME/.local/share/ov/pkg/isaac_sim-2022.1.1"
+   cd $ISAAC_SIM
+   conda activate isaac-sim
+   source setup_conda_env.sh
+   # Below are optional
+   cd ~/ur_ws
+   source devel/setup.bash # or setup.zsh if you're using zsh
+   ```
+
+Please note that you should execute the commands in Step 7 for every new shell.
+
+## Dummy Policy
+
+This is a sample to make sure you have setup the environment correctly. You should see a single UR10 in Isaac Sim.
+
+```sh
+cd ~/OmniIsaacGymEnvs-UR10Reacher
+python omniisaacgymenvs/scripts/dummy_ur10_policy.py task=UR10Reacher test=True num_envs=1
+```
+
+## Demo
+
+We provide an interactable demo based on the `UR10Reacher` RL example. In this demo, you can click on any of
+the UR10 in the scene to manually control the robot with your keyboard as follows:
+
+- `Q`/`A`: Control Joint 0.
+- `W`/`S`: Control Joint 1.
+- `E`/`D`: Control Joint 2.
+- `R`/`F`: Control Joint 3.
+- `T`/`G`: Control Joint 4.
+- `Y`/`H`: Control Joint 5.
+- `ESC`: Unselect a selected UR10 and yields manual control
+
+Launch this demo with the following command. Note that this demo limits the maximum number of UR10 in the scene to 128.
+
+```sh
+cd ~/OmniIsaacGymEnvs-UR10Reacher
+python omniisaacgymenvs/scripts/rlgames_play.py task=UR10Reacher num_envs=64
+```
+
+## Training
+
+You can launch the training in `headless` mode as follows:
+
+```sh
+cd ~/OmniIsaacGymEnvs-UR10Reacher
+python omniisaacgymenvs/scripts/rlgames_train.py task=UR10Reacher headless=True
+```
+
+The number of environments is set to 512 by default. If your GPU has small memory, you can decrease the number of environments by changing the arguments `num_envs` and `horizon_length` as below:
+
+```sh
+cd ~/OmniIsaacGymEnvs-UR10Reacher
+python omniisaacgymenvs/scripts/rlgames_train.py task=UR10Reacher headless=True num_envs=512 horizon_length=64
+```
+
+You can also skip training by downloading the pre-trained model checkpoint by:
+
+```sh
+cd ~/OmniIsaacGymEnvs-UR10Reacher
+wget https://github.com/j3soon/OmniIsaacGymEnvs-UR10Reacher/releases/download/v1.0.0/runs.zip
+unzip runs.zip
+# For Sim2Real
+wget https://github.com/j3soon/OmniIsaacGymEnvs-UR10Reacher/releases/download/v1.0.0/runs_safety.zip
+unzip runs_safety.zip
+```
+
+## Testing
+
+Make sure you have model checkpoints at `~/OmniIsaacGymEnvs-UR10Reacher/runs`, you can check it with the following command:
+
+```sh
+ls ~/OmniIsaacGymEnvs-UR10Reacher/runs/UR10Reacher/nn/
+```
+
+You can visualize the learned policy by the following command:
+
+```sh
+cd ~/OmniIsaacGymEnvs-UR10Reacher
+python omniisaacgymenvs/scripts/rlgames_train.py task=UR10Reacher test=True num_envs=512 checkpoint=./runs/UR10Reacher/nn/UR10Reacher.pth
+```
+
+Likewise, you can decrease the number of environments by modifying the parameter `num_envs=512`.
+
+## Sim2Real
+
+It is important to make sure that you know how to safely control your robot by reading the manual. For additional safety, please add the following configurations:
+1. Set `General Limits` to `Very restricted`
+   ![](docs/media/UR5-Safety-Very-Restricted.jpeg)
+2. Set `Joint Limits` according to your robot mounting point and the environment.
+   ![](docs/media/UR5-Safety-Joint-Limits.jpeg)
+3. Set `Boundaries` according to the robot's environment.
+   ![](docs/media/UR5-Safety-Boundaries.jpeg)
+
+Play with the robot and make sure it won't hit anything under the current configuration. If anything goes wrong, press the red `EMERGENCY-STOP` button.
+
+In the following, we'll assume you have the same mounting direction and workspace as the preview GIF. If you have a different setup, you need to modify the code. Please [open an issue](https://github.com/j3soon/OmniIsaacGymEnvs-UR10Reacher/issues) if you need more information on where to modify.
+
+We'll use ROS to control the real-world robot. Run the following command in a Terminal: (Replace `192.168.50.50` to your robot's IP address)
+
+```sh
+roslaunch ur_robot_driver ur5_bringup.launch robot_ip:=192.168.50.50 headless_mode:=true
+```
+
+Edit `omniisaacgymenvs/cfg/task/UR10Reacher.yaml`. Set `sim2real.enabled` and `safety.enabled` to `True`:
+
+```yaml
+sim2real:
+  enabled: True
+  fail_quietely: False
+  verbose: False
+safety: # Reduce joint limits during both training & testing
+  enabled: True
+```
+
+Now you can control the real-world UR10 in real-time by the following command:
+
+```sh
+cd ~/OmniIsaacGymEnvs-UR10Reacher
+python omniisaacgymenvs/scripts/rlgames_train.py task=UR10Reacher test=True num_envs=1 checkpoint=./runs/UR10Reacher/nn/UR10Reacher.pth
+# or if you want to use the pre-trained checkpoint
+python omniisaacgymenvs/scripts/rlgames_train.py task=UR10Reacher test=True num_envs=1 checkpoint=./runs_safety/UR10Reacher/nn/UR10Reacher.pth
+```
+
+> **Note**: below are the original README of [OmniIsaacGymEnvs](https://github.com/NVIDIA-Omniverse/OmniIsaacGymEnvs).
+
 # Omniverse Isaac Gym Reinforcement Learning Environments for Isaac Sim
 
 ### About this repository
@@ -18,7 +204,7 @@ This repository contains Reinforcement Learning examples that can be run with th
 
 ### Installation
 
-Follow the Isaac Sim [documentation](https://docs.omniverse.nvidia.com/app_isaacsim/app_isaacsim/install_basic.html) to install the latest Isaac Sim release. 
+Follow the Isaac Sim [documentation](https://docs.omniverse.nvidia.com/app_isaacsim/app_isaacsim/install_basic.html) to install the latest Isaac Sim release.
 
 *Examples in this repository rely on features from the most recent Isaac Sim release. Please make sure to update any existing Isaac Sim build to the latest release version, 2022.1.1, to ensure examples work as expected.*
 
@@ -81,7 +267,7 @@ be optimized in future releases.
 
 ### Loading trained models // Checkpoints
 
-Checkpoints are saved in the folder `runs/EXPERIMENT_NAME/nn` where `EXPERIMENT_NAME` 
+Checkpoints are saved in the folder `runs/EXPERIMENT_NAME/nn` where `EXPERIMENT_NAME`
 defaults to the task name, but can also be overridden via the `experiment` argument.
 
 To load a trained checkpoint and continue training, use the `checkpoint` argument:
@@ -90,15 +276,15 @@ To load a trained checkpoint and continue training, use the `checkpoint` argumen
 PYTHON_PATH scripts/rlgames_train.py task=Ant checkpoint=runs/Ant/nn/Ant.pth
 ```
 
-To load a trained checkpoint and only perform inference (no training), pass `test=True` 
-as an argument, along with the checkpoint name. To avoid rendering overhead, you may 
+To load a trained checkpoint and only perform inference (no training), pass `test=True`
+as an argument, along with the checkpoint name. To avoid rendering overhead, you may
 also want to run with fewer environments using `num_envs=64`:
 
 ```bash
 PYTHON_PATH scripts/rlgames_train.py task=Ant checkpoint=runs/Ant/nn/Ant.pth test=True num_envs=64
 ```
 
-Note that if there are special characters such as `[` or `=` in the checkpoint names, 
+Note that if there are special characters such as `[` or `=` in the checkpoint names,
 you will need to escape them and put quotes around the string. For example,
 `checkpoint="runs/Ant/nn/last_Antep\=501rew\[5981.31\].pth"`
 
@@ -153,7 +339,7 @@ This script uses the same RL Games PPO policy as the above, but runs the RL loop
 ### Configuration and command line arguments
 
 We use [Hydra](https://hydra.cc/docs/intro/) to manage the config.
- 
+
 Common arguments for the training scripts are:
 
 * `task=TASK` - Selects which task to use. Any of `AllegroHand`, `Ant`, `Anymal`, `AnymalTerrain`, `BallBalance`, `Cartpole`, `Crazyflie`, `FrankaCabinet`, `Humanoid`, `Ingenuity`, `Quadcopter`, `ShadowHand`, `ShadowHandOpenAI_FF`, `ShadowHandOpenAI_LSTM` (these correspond to the config for each environment in the folder `omniisaacgymenvs/cfg/task`)
@@ -176,9 +362,9 @@ Hydra also allows setting variables inside config files directly as command line
 
 Default values for each of these are found in the `omniisaacgymenvs/cfg/config.yaml` file.
 
-The way that the `task` and `train` portions of the config works are through the use of config groups. 
+The way that the `task` and `train` portions of the config works are through the use of config groups.
 You can learn more about how these work [here](https://hydra.cc/docs/tutorials/structured_config/config_groups/)
-The actual configs for `task` are in `omniisaacgymenvs/cfg/task/<TASK>.yaml` and for `train` in `omniisaacgymenvs/cfg/train/<TASK>PPO.yaml`. 
+The actual configs for `task` are in `omniisaacgymenvs/cfg/task/<TASK>.yaml` and for `train` in `omniisaacgymenvs/cfg/train/<TASK>PPO.yaml`.
 
 In some places in the config you will find other variables referenced (for example,
  `num_actors: ${....task.env.numEnvs}`). Each `.` represents going one level up in the config hierarchy.
@@ -198,7 +384,7 @@ You can run (WandB)[https://wandb.ai/] with OmniIsaacGymEnvs by setting `wandb_a
 
 ## Tasks
 
-Source code for tasks can be found in `omniisaacgymenvs/tasks`. 
+Source code for tasks can be found in `omniisaacgymenvs/tasks`.
 
 Each task follows the frameworks provided in `omni.isaac.core` and `omni.isaac.gym` in Isaac Sim.
 
@@ -209,7 +395,7 @@ Full details on each of the tasks available can be found in the [RL examples doc
 
 ## Demo
 
-We provide an interactable demo based on the `AnymalTerrain` RL example. In this demo, you can click on any of 
+We provide an interactable demo based on the `AnymalTerrain` RL example. In this demo, you can click on any of
 the ANYmals in the scene to go into third-person mode and manually control the robot with your keyboard as follows:
 
 - `Up Arrow`: Forward linear velocity command
@@ -224,7 +410,7 @@ the ANYmals in the scene to go into third-person mode and manually control the r
 Launch this demo with the following command. Note that this demo limits the maximum number of ANYmals in the scene to 128.
 
 ```
-PYTHON_PATH scripts/rlgames_play.py task=AnymalTerrain num_envs=64 checkpoint=omniverse://localhost/NVIDIA/Assets/Isaac/2022.1/Isaac/Samples/OmniIsaacGymEnvs/Checkpoints/anymal_terrain.pth 
+PYTHON_PATH scripts/rlgames_play.py task=AnymalTerrain num_envs=64 checkpoint=omniverse://localhost/NVIDIA/Assets/Isaac/2022.1/Isaac/Samples/OmniIsaacGymEnvs/Checkpoints/anymal_terrain.pth
 ```
 
 <img src="https://user-images.githubusercontent.com/34286328/184688654-6e7899b2-5847-4184-8944-2a96b129b1ff.gif" width="600" height="300"/>

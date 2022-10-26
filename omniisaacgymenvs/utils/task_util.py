@@ -40,7 +40,8 @@ def initialize_task(config, env, init_sim=True):
     from omniisaacgymenvs.tasks.quadcopter import QuadcopterTask
     from omniisaacgymenvs.tasks.shadow_hand import ShadowHandTask
     from omniisaacgymenvs.tasks.crazyflie import CrazyflieTask
-    
+    from omniisaacgymenvs.tasks.ur10_reacher import UR10ReacherTask
+
     # Mappings from strings to environments
     task_map = {
         "AllegroHand": AllegroHandTask,
@@ -57,6 +58,7 @@ def initialize_task(config, env, init_sim=True):
         "ShadowHand": ShadowHandTask,
         "ShadowHandOpenAI_FF": ShadowHandTask,
         "ShadowHandOpenAI_LSTM": ShadowHandTask,
+        "UR10Reacher": UR10ReacherTask,
     }
 
     from .config_utils.sim_config import SimConfig
