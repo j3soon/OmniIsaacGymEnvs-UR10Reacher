@@ -125,6 +125,11 @@ wget https://github.com/j3soon/OmniIsaacGymEnvs-UR10Reacher/releases/download/v1
 unzip runs_safety.zip
 ```
 
+The learning curve of the pre-trained model (normal vs. safety):
+
+![](docs/media/UR10Reacher-Learning-Curve.png)
+![](docs/media/UR10Reacher-Learning-Curve-Safety.png)
+
 ## Testing
 
 Make sure you have model checkpoints at `~/OmniIsaacGymEnvs-UR10Reacher/runs`, you can check it with the following command:
