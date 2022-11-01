@@ -41,6 +41,7 @@ We will use Anaconda to manage our virtual environment:
 5. Patch Isaac Sim 2022.1.1
    ```sh
    export ISAAC_SIM="$HOME/.local/share/ov/pkg/isaac_sim-2022.1.1"
+   cp $ISAAC_SIM/setup_python_env.sh $ISAAC_SIM/setup_python_env.sh.bak
    cp ~/OmniIsaacGymEnvs-UR10Reacher/isaac_sim-2022.1.1-patch/setup_python_env.sh $ISAAC_SIM/setup_python_env.sh
    ```
    > The patch for Isaac on Windows is slightly more complicated. Please open an issue for the patch details if you are using Windows.
@@ -78,26 +79,6 @@ cd ~/OmniIsaacGymEnvs-UR10Reacher
 python omniisaacgymenvs/scripts/dummy_ur10_policy.py task=UR10Reacher test=True num_envs=1
 ```
 
-## Demo
-
-We provide an interactable demo based on the `UR10Reacher` RL example. In this demo, you can click on any of
-the UR10 in the scene to manually control the robot with your keyboard as follows:
-
-- `Q`/`A`: Control Joint 0.
-- `W`/`S`: Control Joint 1.
-- `E`/`D`: Control Joint 2.
-- `R`/`F`: Control Joint 3.
-- `T`/`G`: Control Joint 4.
-- `Y`/`H`: Control Joint 5.
-- `ESC`: Unselect a selected UR10 and yields manual control
-
-Launch this demo with the following command. Note that this demo limits the maximum number of UR10 in the scene to 128.
-
-```sh
-cd ~/OmniIsaacGymEnvs-UR10Reacher
-python omniisaacgymenvs/scripts/rlgames_play.py task=UR10Reacher num_envs=64
-```
-
 ## Training
 
 You can launch the training in `headless` mode as follows:
@@ -107,11 +88,11 @@ cd ~/OmniIsaacGymEnvs-UR10Reacher
 python omniisaacgymenvs/scripts/rlgames_train.py task=UR10Reacher headless=True
 ```
 
-The number of environments is set to 512 by default. If your GPU has small memory, you can decrease the number of environments by changing the arguments `num_envs` and `horizon_length` as below:
+The number of environments is set to 512 by default. If your GPU has small memory, you can decrease the number of environments by changing the arguments `num_envs` as below:
 
 ```sh
 cd ~/OmniIsaacGymEnvs-UR10Reacher
-python omniisaacgymenvs/scripts/rlgames_train.py task=UR10Reacher headless=True num_envs=512 horizon_length=64
+python omniisaacgymenvs/scripts/rlgames_train.py task=UR10Reacher headless=True num_envs=512
 ```
 
 You can also skip training by downloading the pre-trained model checkpoint by:
@@ -186,6 +167,121 @@ python omniisaacgymenvs/scripts/rlgames_train.py task=UR10Reacher test=True num_
 # or if you want to use the pre-trained checkpoint
 python omniisaacgymenvs/scripts/rlgames_train.py task=UR10Reacher test=True num_envs=1 checkpoint=./runs_safety/UR10Reacher/nn/UR10Reacher.pth
 ```
+
+## Demo
+
+We provide an interactable demo based on the `UR10Reacher` RL example. In this demo, you can click on any of
+the UR10 in the scene to manually control the robot with your keyboard as follows:
+
+- `Q`/`A`: Control Joint 0.
+- `W`/`S`: Control Joint 1.
+- `E`/`D`: Control Joint 2.
+- `R`/`F`: Control Joint 3.
+- `T`/`G`: Control Joint 4.
+- `Y`/`H`: Control Joint 5.
+- `ESC`: Unselect a selected UR10 and yields manual control
+
+Launch this demo with the following command. Note that this demo limits the maximum number of UR10 in the scene to 128.
+
+```sh
+cd ~/OmniIsaacGymEnvs-UR10Reacher
+python omniisaacgymenvs/scripts/rlgames_play.py task=UR10Reacher num_envs=64
+```
+
+## Running in Docker
+
+If you have a [NVIDIA Enterprise subscription](https://docs.omniverse.nvidia.com/prod_nucleus/prod_nucleus/enterprise/installation/planning.html), you can run all services with Docker Compose.
+
+For users without a subscription, you can pull the [Isaac Docker image](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/isaac-sim), but should still install Omniverse Nucleus beforehand. (only Isaac itself is dockerized)
+
+Follow [this tutorial](https://docs.omniverse.nvidia.com/app_isaacsim/app_isaacsim/install_advanced_container_deployment.html) to generate your NGC API Key, and make sure you can access Isaac with Omniverse Streaming Client, WebRTC, or WebSocket. After that, exit the Docker container.
+
+Please note that you should generate instanceable assets beforehand as mentioned in the [Installation](#installation) section.
+
+We will now set up the environment inside Docker:
+
+1. Launch an Isaac Container:
+   ```sh
+   docker run --name isaac-sim --entrypoint bash -it --gpus all -e "ACCEPT_EULA=Y" --rm --network=host \
+   -v ~/docker/isaac-sim/cache/ov:/root/.cache/ov:rw \
+   -v ~/docker/isaac-sim/cache/pip:/root/.cache/pip:rw \
+   -v ~/docker/isaac-sim/cache/glcache:/root/.cache/nvidia/GLCache:rw \
+   -v ~/docker/isaac-sim/cache/computecache:/root/.nv/ComputeCache:rw \
+   -v ~/docker/isaac-sim/logs:/root/.nvidia-omniverse/logs:rw \
+   -v ~/docker/isaac-sim/config:/root/.nvidia-omniverse/config:rw \
+   -v ~/docker/isaac-sim/data:/root/.local/share/ov/data:rw \
+   -v ~/docker/isaac-sim/documents:/root/Documents:rw \
+   nvcr.io/nvidia/isaac-sim:2022.1.1
+   ```
+2. Install common tools:
+   ```sh
+   apt update && apt install -y git wget vim
+   ```
+3. Clone this repository:
+   ```sh
+   cd ~
+   git clone https://github.com/j3soon/OmniIsaacGymEnvs-UR10Reacher.git
+   ```
+4. [Download and Install Anaconda](https://www.anaconda.com/products/distribution#Downloads).
+   ```sh
+   # For 64-bit (x86_64/x64/amd64/intel64)
+   wget https://repo.anaconda.com/archive/Anaconda3-2022.10-Linux-x86_64.sh
+   bash Anaconda3-2022.10-Linux-x86_64.sh -b -p $HOME/anaconda3
+   ```
+5. Patch Isaac Sim 2022.1.1
+   ```sh
+   export ISAAC_SIM="/isaac-sim"
+   cp $ISAAC_SIM/setup_python_env.sh $ISAAC_SIM/setup_python_env.sh.bak
+   cp ~/OmniIsaacGymEnvs-UR10Reacher/isaac_sim-2022.1.1-patch/setup_python_env.sh $ISAAC_SIM/setup_python_env.sh
+   ```
+6. [Set up conda environment for Isaac Sim](https://docs.omniverse.nvidia.com/app_isaacsim/app_isaacsim/install_python.html#advanced-running-with-anaconda)
+   ```sh
+   source ~/anaconda3/etc/profile.d/conda.sh
+   # conda remove --name isaac-sim --all
+   export ISAAC_SIM="/isaac-sim"
+   cd $ISAAC_SIM
+   conda env create -f environment.yml
+   conda activate isaac-sim
+   cd ~/OmniIsaacGymEnvs-UR10Reacher
+   pip install -e .
+   ```
+7. Activate conda environment
+   ```sh
+   source ~/anaconda3/etc/profile.d/conda.sh
+   export ISAAC_SIM="/isaac-sim"
+   cd $ISAAC_SIM
+   conda activate isaac-sim
+   source setup_conda_env.sh
+   ./vulkan_check.sh
+   ```
+
+We can now train a RL policy in this container:
+
+```sh
+cd ~/OmniIsaacGymEnvs-UR10Reacher
+python omniisaacgymenvs/scripts/rlgames_train.py task=UR10Reacher headless=True num_envs=512
+```
+
+Make sure to copy the learned weights to a mounted volume before exiting the container, otherwise it will be deleted:
+
+```sh
+# In container
+cp -r ~/OmniIsaacGymEnvs-UR10Reacher/runs ~/Documents/runs
+# In host
+ls ~/docker/isaac-sim/documents/
+```
+
+You can watch the training progress with:
+
+```sh
+docker ps # Observe Container ID
+docker exec -it <CONTAINER_ID> /bin/bash
+conda activate isaac-sim
+cd ~/OmniIsaacGymEnvs-UR10Reacher
+tensorboard --logdir=./runs
+```
+
+Currently we do not support running commands that requires visualization (Testing, Sim2Real, etc.) in Docker. Since I haven't figured out how to make Vulkan render a Isaac window inside a container yet. Alternatively, it may be possible to add `headless=True` and view them in Omniverse Streaming Client, WebRTC, or WebSocket, but I haven't tested this by myself.
 
 > **Note**: below are the original README of [OmniIsaacGymEnvs](https://github.com/NVIDIA-Omniverse/OmniIsaacGymEnvs).
 
