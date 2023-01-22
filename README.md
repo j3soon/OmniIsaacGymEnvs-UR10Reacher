@@ -22,53 +22,92 @@ Prerequisites:
 We will use Anaconda to manage our virtual environment:
 
 1. Clone this repository:
-   ```sh
-   cd ~
-   git clone https://github.com/j3soon/OmniIsaacGymEnvs-UR10Reacher.git
-   ```
+   - Linux
+     ```sh
+     cd ~
+     git clone https://github.com/j3soon/OmniIsaacGymEnvs-UR10Reacher.git
+     ```
+   - Windows
+     ```sh
+     cd %USERPROFILE%
+     git clone https://github.com/j3soon/OmniIsaacGymEnvs-UR10Reacher.git
+     ```
 2. Generate [instanceable](https://docs.omniverse.nvidia.com/app_isaacsim/app_isaacsim/tutorial_gym_instanceable_assets.html) UR10 assets for training:
 
    [Launch the Script Editor](https://docs.omniverse.nvidia.com/app_isaacsim/app_isaacsim/tutorial_gui_interactive_scripting.html#script-editor) in Isaac Sim. Copy the content in `omniisaacgymenvs/utils/usd_utils/create_instanceable_ur10.py` and execute it inside the Script Editor window. Wait until you see the text `Done!`.
 3. (Optional) [Install ROS Melodic for Ubuntu](https://wiki.ros.org/melodic/Installation/Ubuntu) and [Set up a catkin workspace for UR10](https://github.com/UniversalRobots/Universal_Robots_ROS_Driver/blob/master/README.md).
    
    Please change all `catkin_ws` in the commands to `ur_ws`, and make sure you can control the robot with `rqt-joint-trajectory-controller`.
+
+   ROS support is not tested on Windows.
 4. [Download and Install Anaconda](https://www.anaconda.com/products/distribution#Downloads).
    ```sh
-   # For 64-bit (x86_64/x64/amd64/intel64)
+   # For 64-bit Linux (x86_64/x64/amd64/intel64)
    wget https://repo.anaconda.com/archive/Anaconda3-2022.10-Linux-x86_64.sh
    bash Anaconda3-2022.10-Linux-x86_64.sh
    ```
+   For Windows users, make sure to use Anaconda Prompt instead of Command Prompt or Powershell for the following commands.
 5. Patch Isaac Sim 2022.1.1
-   ```sh
-   export ISAAC_SIM="$HOME/.local/share/ov/pkg/isaac_sim-2022.1.1"
-   cp $ISAAC_SIM/setup_python_env.sh $ISAAC_SIM/setup_python_env.sh.bak
-   cp ~/OmniIsaacGymEnvs-UR10Reacher/isaac_sim-2022.1.1-patch/setup_python_env.sh $ISAAC_SIM/setup_python_env.sh
-   ```
-   > The patch for Isaac on Windows is slightly more complicated. Please open an issue for the patch details if you are using Windows.
+   - Linux
+     ```sh
+     export ISAAC_SIM="$HOME/.local/share/ov/pkg/isaac_sim-2022.1.1"
+     cp $ISAAC_SIM/setup_python_env.sh $ISAAC_SIM/setup_python_env.sh.bak
+     cp ~/OmniIsaacGymEnvs-UR10Reacher/isaac_sim-2022.1.1-patch/setup_python_env.sh $ISAAC_SIM/setup_python_env.sh
+     ```
+   - Windows
+     ```sh
+     set ISAAC_SIM="%LOCALAPPDATA%\ov\pkg\isaac_sim-2022.1.1"
+     copy %USERPROFILE%\OmniIsaacGymEnvs-UR10Reacher\isaac_sim-2022.1.1-patch\windows\setup_conda_env.bat %ISAAC_SIM%\setup_conda_env.bat
+     ```
 6. [Set up conda environment for Isaac Sim](https://docs.omniverse.nvidia.com/app_isaacsim/app_isaacsim/install_python.html#advanced-running-with-anaconda)
-   ```sh
-   # conda remove --name isaac-sim --all
-   export ISAAC_SIM="$HOME/.local/share/ov/pkg/isaac_sim-2022.1.1"
-   cd $ISAAC_SIM
-   conda env create -f environment.yml
-   conda activate isaac-sim
-   cd ~/OmniIsaacGymEnvs-UR10Reacher
-   pip install -e .
-   # Below is optional
-   pip install pyyaml rospkg
-   ```
+   - Linux
+     ```sh
+     # conda remove --name isaac-sim --all
+     export ISAAC_SIM="$HOME/.local/share/ov/pkg/isaac_sim-2022.1.1"
+     cd $ISAAC_SIM
+     conda env create -f environment.yml
+     conda activate isaac-sim
+     cd ~/OmniIsaacGymEnvs-UR10Reacher
+     pip install -e .
+     # Below is optional
+     pip install pyyaml rospkg
+     ```
+   - Windows
+     ```sh
+     # conda remove --name isaac-sim --all
+     set ISAAC_SIM="%LOCALAPPDATA%\ov\pkg\isaac_sim-2022.1.1"
+     cd %ISAAC_SIM%
+     conda env create -f environment.yml
+     conda activate isaac-sim
+     :: Fix incorrect importlib-metadata version (isaac-sim 2022.1.1)
+     pip install importlib-metadata==4.11.4
+     cd %USERPROFILE%\OmniIsaacGymEnvs-UR10Reacher
+     pip install -e .
+     :: Fix incorrect torch version (isaac-sim 2022.1.1)
+     conda install -y pytorch==1.11.0 torchvision==0.12.0 torchaudio==0.11.0 -c pytorch
+     ```
 7. Activate conda & ROS environment
-   ```sh
-   export ISAAC_SIM="$HOME/.local/share/ov/pkg/isaac_sim-2022.1.1"
-   cd $ISAAC_SIM
-   conda activate isaac-sim
-   source setup_conda_env.sh
-   # Below are optional
-   cd ~/ur_ws
-   source devel/setup.bash # or setup.zsh if you're using zsh
-   ```
+   - Linux
+     ```sh
+     export ISAAC_SIM="$HOME/.local/share/ov/pkg/isaac_sim-2022.1.1"
+     cd $ISAAC_SIM
+     conda activate isaac-sim
+     source setup_conda_env.sh
+     # Below are optional
+     cd ~/ur_ws
+     source devel/setup.bash # or setup.zsh if you're using zsh
+     ```
+   - Windows
+     ```sh
+     set ISAAC_SIM="%LOCALAPPDATA%\ov\pkg\isaac_sim-2022.1.1"
+     cd %ISAAC_SIM%
+     conda activate isaac-sim
+     call setup_conda_env.bat
+     ```
 
 Please note that you should execute the commands in Step 7 for every new shell.
+
+For Windows users, replace `~` to `%USERPROFILE%` for all the following commands.
 
 ## Dummy Policy
 
