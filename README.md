@@ -15,7 +15,7 @@ This repo is compatible with [OmniIsaacGymEnvs-DofbotReacher](https://github.com
 ## Installation
 
 Prerequisites:
-- [Install Omniverse Isaac Sim 2022.1.1](https://docs.omniverse.nvidia.com/app_isaacsim/app_isaacsim/install_basic.html) (Must setup Cache and Nucleus)
+- [Install Omniverse Isaac Sim 2022.1.1](https://docs.omniverse.nvidia.com/isaacsim/latest/install_workstation.html) (Must setup Cache and Nucleus)
 - Your computer & GPU should be able to run the Cartpole example in [OmniIsaacGymEnvs](https://github.com/NVIDIA-Omniverse/OmniIsaacGymEnvs)
 - (Optional) [Set up a UR3/UR5/UR10](https://www.universal-robots.com/products/) in the real world
 
@@ -233,7 +233,7 @@ If you have a [NVIDIA Enterprise subscription](https://docs.omniverse.nvidia.com
 
 For users without a subscription, you can pull the [Isaac Docker image](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/isaac-sim), but should still install Omniverse Nucleus beforehand. (only Isaac itself is dockerized)
 
-Follow [this tutorial](https://docs.omniverse.nvidia.com/app_isaacsim/app_isaacsim/install_advanced_container_deployment.html) to generate your NGC API Key, and make sure you can access Isaac with Omniverse Streaming Client, WebRTC, or WebSocket. After that, exit the Docker container.
+Follow [this tutorial](https://docs.omniverse.nvidia.com/isaacsim/latest/install_container.html) to generate your NGC API Key, and make sure you can access Isaac with Omniverse Streaming Client, WebRTC, or WebSocket. After that, exit the Docker container.
 
 Please note that you should generate instanceable assets beforehand as mentioned in the [Installation](#installation) section.
 
@@ -344,7 +344,7 @@ This repository contains Reinforcement Learning examples that can be run with th
 
 ### Installation
 
-Follow the Isaac Sim [documentation](https://docs.omniverse.nvidia.com/app_isaacsim/app_isaacsim/install_basic.html) to install the latest Isaac Sim release.
+Follow the Isaac Sim [documentation](https://docs.omniverse.nvidia.com/isaacsim/latest/install_workstation.html) to install the latest Isaac Sim release.
 
 *Examples in this repository rely on features from the most recent Isaac Sim release. Please make sure to update any existing Isaac Sim build to the latest release version, 2022.1.1, to ensure examples work as expected.*
 
@@ -428,10 +428,10 @@ Note that if there are special characters such as `[` or `=` in the checkpoint n
 you will need to escape them and put quotes around the string. For example,
 `checkpoint="runs/Ant/nn/last_Antep\=501rew\[5981.31\].pth"`
 
-We provide pre-trained checkpoints on the [Nucleus](https://docs.omniverse.nvidia.com/prod_nucleus/prod_nucleus/overview.html) server under `Assets/Isaac/2022.1/Isaac/Samples/OmniIsaacGymEnvs/Checkpoints`. Run the following command
+We provide pre-trained checkpoints on the [Nucleus](https://docs.omniverse.nvidia.com/nucleus/latest/index.html) server under `Assets/Isaac/2022.1/Isaac/Samples/OmniIsaacGymEnvs/Checkpoints`. Run the following command
 to launch inference with pre-trained checkpoint:
 
-Localhost (To set up localhost, please refer to the [Isaac Sim installation guide](https://docs.omniverse.nvidia.com/app_isaacsim/app_isaacsim/install_basic.html)):
+Localhost (To set up localhost, please refer to the [Isaac Sim installation guide](https://docs.omniverse.nvidia.com/isaacsim/latest/install_workstation.html)):
 
 ```bash
 PYTHON_PATH scripts/rlgames_train.py task=Ant checkpoint=omniverse://localhost/NVIDIA/Assets/Isaac/2022.1/Isaac/Samples/OmniIsaacGymEnvs/Checkpoints/ant.pth test=True num_envs=64
