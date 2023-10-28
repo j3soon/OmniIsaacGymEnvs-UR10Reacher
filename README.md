@@ -2,7 +2,7 @@
 
 This repository adds a UR10Reacher environment based on [OmniIsaacGymEnvs](https://github.com/NVIDIA-Omniverse/OmniIsaacGymEnvs) (commit [d0eaf2e](https://github.com/NVIDIA-Omniverse/OmniIsaacGymEnvs/tree/d0eaf2e7f1e1e901d62e780392ca77843c08eb2c)), and includes Sim2Real code to control a real-world [UR10](https://www.universal-robots.com/products/ur10-robot/) with the policy learned by reinforcement learning in Omniverse Isaac Gym/Sim.
 
-We target Isaac Sim 2022.1.1 and test the RL code on Windows 10 and Ubuntu 18.04. The Sim2Real code is tested on Linux and a real UR5 CB3 (since we don't have access to a real UR10).
+We target Isaac Sim 2022.1.1 and tested the RL code on Windows 10 and Ubuntu 18.04. The Sim2Real code is tested on Linux and a real UR5 CB3 (since we don't have access to a real UR10).
 
 This repo is compatible with [OmniIsaacGymEnvs-DofbotReacher](https://github.com/j3soon/OmniIsaacGymEnvs-DofbotReacher).
 
@@ -15,9 +15,14 @@ This repo is compatible with [OmniIsaacGymEnvs-DofbotReacher](https://github.com
 ## Installation
 
 Prerequisites:
-- [Install Omniverse Isaac Sim 2022.1.1](https://docs.omniverse.nvidia.com/isaacsim/latest/install_workstation.html) (Must setup Cache and Nucleus)
+- Before starting, please make sure your hardware and software meet the [system requirements](https://docs.omniverse.nvidia.com/isaacsim/latest/installation/requirements.html#system-requirements).
+- [Install Omniverse Isaac Sim 2022.1.1](https://docs.omniverse.nvidia.com/isaacsim/latest/installation/install_workstation.html) (Must setup Cache and Nucleus)
+  - You may try out newer versions of Isaac Sim along with [their corresponding patch](https://github.com/j3soon/isaac-extended#conda-issue-on-linux), but it is not guaranteed to work.
+- Double check that Nucleus is correctly installed by [following these steps](https://github.com/j3soon/isaac-extended#nucleus).
 - Your computer & GPU should be able to run the Cartpole example in [OmniIsaacGymEnvs](https://github.com/NVIDIA-Omniverse/OmniIsaacGymEnvs)
 - (Optional) [Set up a UR3/UR5/UR10](https://www.universal-robots.com/products/) in the real world
+
+Make sure to install Isaac Sim in the default directory and clone this repository to the home directory. Otherwise, you will encounter issues if you didn't modify the commands below accordingly.
 
 We will use Anaconda to manage our virtual environment:
 
@@ -32,7 +37,7 @@ We will use Anaconda to manage our virtual environment:
      cd %USERPROFILE%
      git clone https://github.com/j3soon/OmniIsaacGymEnvs-UR10Reacher.git
      ```
-2. Generate [instanceable](https://docs.omniverse.nvidia.com/app_isaacsim/app_isaacsim/tutorial_gym_instanceable_assets.html) UR10 assets for training:
+2. Generate [instanceable](https://docs.omniverse.nvidia.com/isaacsim/latest/isaac_gym_tutorials/tutorial_gym_instanceable_assets.html) UR10 assets for training:
 
    [Launch the Script Editor](https://docs.omniverse.nvidia.com/app_isaacsim/app_isaacsim/tutorial_gui_interactive_scripting.html#script-editor) in Isaac Sim. Copy the content in `omniisaacgymenvs/utils/usd_utils/create_instanceable_ur10.py` and execute it inside the Script Editor window. Wait until you see the text `Done!`.
 3. (Optional) [Install ROS Melodic for Ubuntu](https://wiki.ros.org/melodic/Installation/Ubuntu) and [Set up a catkin workspace for UR10](https://github.com/UniversalRobots/Universal_Robots_ROS_Driver/blob/master/README.md).
@@ -46,7 +51,7 @@ We will use Anaconda to manage our virtual environment:
    wget https://repo.anaconda.com/archive/Anaconda3-2022.10-Linux-x86_64.sh
    bash Anaconda3-2022.10-Linux-x86_64.sh
    ```
-   For Windows users, make sure to use Anaconda Prompt instead of Command Prompt or Powershell for the following commands.
+   For Windows users, make sure to use `Anaconda Prompt` instead of `Anaconda Powershell Prompt`, `Command Prompt`, or `Powershell` for the following commands.
 5. Patch Isaac Sim 2022.1.1
    - Linux
      ```sh
@@ -59,7 +64,7 @@ We will use Anaconda to manage our virtual environment:
      set ISAAC_SIM="%LOCALAPPDATA%\ov\pkg\isaac_sim-2022.1.1"
      copy %USERPROFILE%\OmniIsaacGymEnvs-UR10Reacher\isaac_sim-2022.1.1-patch\windows\setup_conda_env.bat %ISAAC_SIM%\setup_conda_env.bat
      ```
-6. [Set up conda environment for Isaac Sim](https://docs.omniverse.nvidia.com/app_isaacsim/app_isaacsim/install_python.html#advanced-running-with-anaconda)
+6. [Set up conda environment for Isaac Sim](https://docs.omniverse.nvidia.com/isaacsim/latest/installation/install_python.html#advanced-running-with-anaconda)
    - Linux
      ```sh
      # conda remove --name isaac-sim --all
@@ -140,7 +145,7 @@ You can also skip training by downloading the pre-trained model checkpoint by:
 cd ~/OmniIsaacGymEnvs-UR10Reacher
 wget https://github.com/j3soon/OmniIsaacGymEnvs-UR10Reacher/releases/download/v1.0.0/runs.zip
 unzip runs.zip
-# For Sim2Real
+# For Sim2Real only, requires editing config file as mentioned in the Sim2Real section
 wget https://github.com/j3soon/OmniIsaacGymEnvs-UR10Reacher/releases/download/v1.0.0/runs_safety.zip
 unzip runs_safety.zip
 ```
@@ -233,7 +238,7 @@ If you have a [NVIDIA Enterprise subscription](https://docs.omniverse.nvidia.com
 
 For users without a subscription, you can pull the [Isaac Docker image](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/isaac-sim), but should still install Omniverse Nucleus beforehand. (only Isaac itself is dockerized)
 
-Follow [this tutorial](https://docs.omniverse.nvidia.com/isaacsim/latest/install_container.html) to generate your NGC API Key, and make sure you can access Isaac with Omniverse Streaming Client, WebRTC, or WebSocket. After that, exit the Docker container.
+Follow [this tutorial](https://docs.omniverse.nvidia.com/isaacsim/latest/installation/install_container.html#isaac-sim-setup-remote-headless-container) to generate your NGC API Key, and make sure you can access Isaac with Omniverse Streaming Client, WebRTC, or WebSocket. After that, exit the Docker container.
 
 Please note that you should generate instanceable assets beforehand as mentioned in the [Installation](#installation) section.
 
@@ -273,7 +278,7 @@ We will now set up the environment inside Docker:
    cp $ISAAC_SIM/setup_python_env.sh $ISAAC_SIM/setup_python_env.sh.bak
    cp ~/OmniIsaacGymEnvs-UR10Reacher/isaac_sim-2022.1.1-patch/setup_python_env.sh $ISAAC_SIM/setup_python_env.sh
    ```
-6. [Set up conda environment for Isaac Sim](https://docs.omniverse.nvidia.com/app_isaacsim/app_isaacsim/install_python.html#advanced-running-with-anaconda)
+6. [Set up conda environment for Isaac Sim](https://docs.omniverse.nvidia.com/isaacsim/latest/installation/install_python.html#advanced-running-with-anaconda)
    ```sh
    source ~/anaconda3/etc/profile.d/conda.sh
    # conda remove --name isaac-sim --all
