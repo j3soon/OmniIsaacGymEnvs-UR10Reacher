@@ -327,6 +327,22 @@ tensorboard --logdir=./runs
 
 Currently we do not support running commands that requires visualization (Testing, Sim2Real, etc.) in Docker. Since I haven't figured out how to make Vulkan render a Isaac window inside a container yet. Alternatively, it may be possible to add `headless=True` and view them in Omniverse Streaming Client, WebRTC, or WebSocket, but I haven't tested this by myself.
 
+## Acknowledgement
+
+This project has been made possible through the support of [ElsaLab][elsalab] and [NVIDIA AI Technology Center (NVAITC)][nvaitc].
+
+I would also like to express my gratitude to [@tony2guo](https://github.com/tony2guo) for his invaluable assistance in guiding me through the setup process of the real-world UR10.
+
+For a complete list of contributors to the code of this repository, please visit the [contributor list](https://github.com/j3soon/OmniIsaacGymEnvs-UR10Reacher/graphs/contributors).
+
+[![](docs/media/logos/elsalab.png)][elsalab]
+[![](docs/media/logos/nvaitc.png)][nvaitc]
+
+[elsalab]: https://github.com/elsa-lab
+[nvaitc]: https://github.com/NVAITC
+
+Disclaimer: this is not an official NVIDIA product.
+
 > **Note**: below are the original README of [OmniIsaacGymEnvs](https://github.com/NVIDIA-Omniverse/OmniIsaacGymEnvs).
 
 # Omniverse Isaac Gym Reinforcement Learning Environments for Isaac Sim
