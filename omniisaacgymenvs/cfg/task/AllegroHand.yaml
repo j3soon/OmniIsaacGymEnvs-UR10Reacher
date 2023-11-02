@@ -44,10 +44,11 @@ env:
 sim:
   dt: 0.0083 # 1/120 s
   add_ground_plane: True
-  add_distant_light: True
+  add_distant_light: False
   use_gpu_pipeline: ${eq:${...pipeline},"gpu"}
-  use_flatcache: True
+  use_fabric: True
   enable_scene_query_support: False
+  disable_contact_processing: False
 
   # set to True if you use camera sensors in the environment
   enable_cameras: False
@@ -70,8 +71,8 @@ sim:
     # GPU buffers
     gpu_max_rigid_contact_count: 524288
     gpu_max_rigid_patch_count: 33554432
-    gpu_found_lost_pairs_capacity: 8192
-    gpu_found_lost_aggregate_pairs_capacity: 262144 
+    gpu_found_lost_pairs_capacity: 819200
+    gpu_found_lost_aggregate_pairs_capacity: 819200 
     gpu_total_aggregate_pairs_capacity: 1048576
     gpu_max_soft_body_contacts: 1048576
     gpu_max_particle_contacts: 1048576
@@ -82,7 +83,6 @@ sim:
   allegro_hand:
     # -1 to use default values
     override_usd_defaults: False
-    fixed_base: False
     enable_self_collisions: True
     enable_gyroscopic_forces: False
     # also in stage params
@@ -97,7 +97,7 @@ sim:
   object:
     # -1 to use default values
     override_usd_defaults: False
-    fixed_base: False
+    make_kinematic: False
     enable_self_collisions: False
     enable_gyroscopic_forces: True
     # also in stage params
@@ -112,7 +112,7 @@ sim:
   goal_object:
     # -1 to use default values
     override_usd_defaults: False
-    fixed_base: True
+    make_kinematic: True
     enable_self_collisions: False
     enable_gyroscopic_forces: True
     # also in stage params

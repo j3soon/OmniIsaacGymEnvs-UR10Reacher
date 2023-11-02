@@ -40,7 +40,7 @@ params:
     env_name: rlgpu
     device: ${....rl_device}
     device_name: ${....rl_device}
-    multi_gpu: False
+    multi_gpu: ${....multi_gpu}
     ppo: True
     mixed_precision: True
     normalize_input: True
@@ -69,5 +69,5 @@ params:
     mini_epochs: 4
     critic_coef: 2
     clip_value: True
-    seq_len: 4
+    seq_length: 4
     bounds_loss_coef: 0.0001

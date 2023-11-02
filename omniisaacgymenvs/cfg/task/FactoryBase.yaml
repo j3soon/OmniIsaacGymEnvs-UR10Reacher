@@ -1,0 +1,17 @@
+# See schema in factory_schema_config_base.py for descriptions of parameters.
+
+defaults:
+  - _self_
+  - /factory_schema_config_base
+
+sim:
+  add_damping: True
+  disable_contact_processing: False
+    
+env:
+  env_spacing: 1.5
+  franka_depth: 0.5
+  table_height: 0.4
+  franka_friction: 1.0
+  table_friction: 0.3
+

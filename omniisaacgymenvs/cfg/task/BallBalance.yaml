@@ -7,7 +7,7 @@ physics_engine: ${..physics_engine}
 env: 
   numEnvs: ${resolve_default:4096,${...num_envs}}
   envSpacing: 2.0
-  maxEpisodeLength: 500
+  maxEpisodeLength: 600
   actionSpeedScale: 20
   
   clipObservations: 5.0
@@ -18,9 +18,10 @@ sim:
   use_gpu_pipeline: ${eq:${...pipeline},"gpu"}
   gravity: [0.0, 0.0, -9.81]
   add_ground_plane: True
-  add_distant_light: True
-  use_flatcache: True
+  add_distant_light: False
+  use_fabric: True
   enable_scene_query_support: False
+  disable_contact_processing: False
 
   # set to True if you use camera sensors in the environment
   enable_cameras: False
@@ -48,9 +49,9 @@ sim:
     # GPU buffers
     gpu_max_rigid_contact_count: 524288
     gpu_max_rigid_patch_count: 81920
-    gpu_found_lost_pairs_capacity: 8192
+    gpu_found_lost_pairs_capacity: 262144
     gpu_found_lost_aggregate_pairs_capacity: 262144
-    gpu_total_aggregate_pairs_capacity: 8192
+    gpu_total_aggregate_pairs_capacity: 262144
     gpu_max_soft_body_contacts: 1048576
     gpu_max_particle_contacts: 1048576
     gpu_heap_capacity: 67108864
@@ -60,7 +61,6 @@ sim:
   table:
     # -1 to use default values
     override_usd_defaults: False
-    fixed_base: False
     enable_self_collisions: True
     enable_gyroscopic_forces: True
     # also in stage params
@@ -76,7 +76,7 @@ sim:
   ball:
     # -1 to use default values
     override_usd_defaults: False
-    fixed_base: False
+    make_kinematic: False
     enable_self_collisions: False
     enable_gyroscopic_forces: True
     # also in stage params

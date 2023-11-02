@@ -26,45 +26,25 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from omniisaacgymenvs.tasks.base.rl_task import RLTask
-from omniisaacgymenvs.robots.articulations.balance_bot import BalanceBot
-
-from omni.isaac.core.articulations import ArticulationView
-from omni.isaac.core.utils.prims import get_prim_at_path
-from omni.isaac.core.utils.stage import get_current_stage
-from omni.isaac.core.prims import RigidPrimView, RigidPrim
-from omni.isaac.core.utils.torch.maths import *
-from omni.isaac.core.objects import DynamicSphere
+import math
 
 import numpy as np
 import torch
-import math
-
+from omni.isaac.core.articulations import ArticulationView
+from omni.isaac.core.objects import DynamicSphere
+from omni.isaac.core.prims import RigidPrim, RigidPrimView
+from omni.isaac.core.utils.prims import get_prim_at_path
+from omni.isaac.core.utils.stage import get_current_stage
+from omni.isaac.core.utils.torch.maths import *
+from omniisaacgymenvs.tasks.base.rl_task import RLTask
+from omniisaacgymenvs.robots.articulations.balance_bot import BalanceBot
 from pxr import PhysxSchema
 
 
 class BallBalanceTask(RLTask):
-    def __init__(
-        self,
-        name,
-        sim_config,
-        env,
-        offset=None
-    ) -> None:
+    def __init__(self, name, sim_config, env, offset=None) -> None:
 
-        self._sim_config = sim_config
-        self._cfg = sim_config.config
-        self._task_cfg = sim_config.task_config
-
-        self._num_envs = self._task_cfg["env"]["numEnvs"]
-        self._env_spacing = self._task_cfg["env"]["envSpacing"]
-        self._dt = self._task_cfg["sim"]["dt"]
-        self._table_position = torch.tensor([0, 0, 0.62])
-        self._ball_position = torch.tensor([0.0, 0.0, 1.0])
-        self._ball_radius = 0.1
-
-        self._action_speed_scale = self._task_cfg["env"]["actionSpeedScale"]
-        self._max_episode_length = self._task_cfg["env"]["maxEpisodeLength"]
+        self.update_config(sim_config)
 
         self._num_observations = 12 + 12
         self._num_actions = 3
@@ -75,29 +55,70 @@ class BallBalanceTask(RLTask):
 
         return
 
+    def update_config(self, sim_config):
+        self._sim_config = sim_config
+        self._cfg = sim_config.config
+        self._task_cfg = sim_config.task_config
+
+        self._num_envs = self._task_cfg["env"]["numEnvs"]
+        self._env_spacing = self._task_cfg["env"]["envSpacing"]
+        self._dt = self._task_cfg["sim"]["dt"]
+        self._table_position = torch.tensor([0, 0, 0.56])
+        self._ball_position = torch.tensor([0.0, 0.0, 1.0])
+        self._ball_radius = 0.1
+
+        self._action_speed_scale = self._task_cfg["env"]["actionSpeedScale"]
+        self._max_episode_length = self._task_cfg["env"]["maxEpisodeLength"]
+
     def set_up_scene(self, scene) -> None:
         self.get_balance_table()
         self.add_ball()
-        super().set_up_scene(scene)
-        self._balance_bots = ArticulationView(prim_paths_expr="/World/envs/.*/BalanceBot", name="balance_bot_view", reset_xform_properties=False)
+        super().set_up_scene(scene, replicate_physics=False)
+        self.set_up_table_anchors()
+        self._balance_bots = ArticulationView(
+            prim_paths_expr="/World/envs/.*/BalanceBot/tray", name="balance_bot_view", reset_xform_properties=False
+        )
         scene.add(self._balance_bots)
-        self._balls = RigidPrimView(prim_paths_expr="/World/envs/.*/Ball/ball", name="ball_view", reset_xform_properties=False)
+        self._balls = RigidPrimView(
+            prim_paths_expr="/World/envs/.*/Ball/ball", name="ball_view", reset_xform_properties=False
+        )
         scene.add(self._balls)
         return
 
+    def initialize_views(self, scene):
+        super().initialize_views(scene)
+        if scene.object_exists("balance_bot_view"):
+            scene.remove_object("balance_bot_view", registry_only=True)
+        if scene.object_exists("ball_view"):
+            scene.remove_object("ball_view", registry_only=True)
+        self._balance_bots = ArticulationView(
+            prim_paths_expr="/World/envs/.*/BalanceBot/tray", name="balance_bot_view", reset_xform_properties=False
+        )
+        scene.add(self._balance_bots)
+        self._balls = RigidPrimView(
+            prim_paths_expr="/World/envs/.*/Ball/ball", name="ball_view", reset_xform_properties=False
+        )
+        scene.add(self._balls)
+
     def get_balance_table(self):
-        balance_table = BalanceBot(prim_path=self.default_zero_env_path + "/BalanceBot", name="BalanceBot", translation=self._table_position)
-        self._sim_config.apply_articulation_settings("table", get_prim_at_path(balance_table.prim_path), self._sim_config.parse_actor_config("table"))
+        balance_table = BalanceBot(
+            prim_path=self.default_zero_env_path + "/BalanceBot", name="BalanceBot", translation=self._table_position
+        )
+        self._sim_config.apply_articulation_settings(
+            "table", get_prim_at_path(balance_table.prim_path), self._sim_config.parse_actor_config("table")
+        )
 
     def add_ball(self):
         ball = DynamicSphere(
-            prim_path=self.default_zero_env_path + "/Ball/ball", 
-            translation=self._ball_position, 
+            prim_path=self.default_zero_env_path + "/Ball/ball",
+            translation=self._ball_position,
             name="ball_0",
             radius=self._ball_radius,
             color=torch.tensor([0.9, 0.6, 0.2]),
         )
-        self._sim_config.apply_articulation_settings("ball", get_prim_at_path(ball.prim_path), self._sim_config.parse_actor_config("ball"))
+        self._sim_config.apply_articulation_settings(
+            "ball", get_prim_at_path(ball.prim_path), self._sim_config.parse_actor_config("ball")
+        )
 
     def set_up_table_anchors(self):
         from pxr import Gf
@@ -105,7 +126,7 @@ class BallBalanceTask(RLTask):
         stage = get_current_stage()
         for i in range(self._num_envs):
             base_path = f"{self.default_base_env_path}/env_{i}/BalanceBot"
-            for j, leg_offset in enumerate([(0.4, 0, height), (-0.2, 0.34641, height), (-0.2, -0.34641, height)]):
+            for j, leg_offset in enumerate([(0.4, 0, height), (-0.2, 0.34641, 0), (-0.2, -0.34641, 0)]):
                 # fix the legs to ground
                 leg_path = f"{base_path}/lower_leg{j}"
                 ground_joint_path = leg_path + "_ground"
@@ -146,7 +167,7 @@ class BallBalanceTask(RLTask):
         dof_pos = self._balance_bots.get_joint_positions(clone=False)
         dof_vel = self._balance_bots.get_joint_velocities(clone=False)
 
-        sensor_force_torques = self._balance_bots._physics_view.get_force_sensor_forces() # (num_envs, num_sensors, 6)
+        sensor_force_torques = self._balance_bots.get_measured_joint_forces(joint_indices=self._sensor_indices) # (num_envs, num_sensors, 6)
 
         self.obs_buf[..., 0:3] = dof_pos[..., self.actuated_dof_indices]
         self.obs_buf[..., 3:6] = dof_vel[..., self.actuated_dof_indices]
@@ -160,24 +181,21 @@ class BallBalanceTask(RLTask):
         self.ball_positions = ball_positions
         self.ball_linvels = ball_linvels
 
-        observations = {
-            "ball_balance": {
-                "obs_buf": self.obs_buf
-            }
-        }
+        observations = {"ball_balance": {"obs_buf": self.obs_buf}}
         return observations
 
     def pre_physics_step(self, actions) -> None:
-        if not self.anchored:
-            # Adding extra joints after ArticulationView is initialized
-            self.set_up_table_anchors()
-            self.anchored = True
+        if not self._env._world.is_playing():
+            return
+
         reset_env_ids = self.reset_buf.nonzero(as_tuple=False).squeeze(-1)
         if len(reset_env_ids) > 0:
             self.reset_idx(reset_env_ids)
 
         # update position targets from actions
-        self.dof_position_targets[..., self.actuated_dof_indices] += self._dt * self._action_speed_scale * actions.to(self.device)
+        self.dof_position_targets[..., self.actuated_dof_indices] += (
+            self._dt * self._action_speed_scale * actions.to(self.device)
+        )
         self.dof_position_targets[:] = tensor_clamp(
             self.dof_position_targets, self.bbot_dof_lower_limits, self.bbot_dof_upper_limits
         )
@@ -185,7 +203,7 @@ class BallBalanceTask(RLTask):
         # reset position targets for reset envs
         self.dof_position_targets[reset_env_ids] = 0
 
-        self._balance_bots.set_joint_position_targets(self.dof_position_targets) #.clone())
+        self._balance_bots.set_joint_position_targets(self.dof_position_targets)  # .clone())
 
     def reset_idx(self, env_ids):
         num_resets = len(env_ids)
@@ -194,7 +212,7 @@ class BallBalanceTask(RLTask):
         env_ids_64 = env_ids.type(torch.int64)
 
         min_d = 0.001  # min horizontal dist from origin
-        max_d = 0.5  # max horizontal dist from origin
+        max_d = 0.4  # max horizontal dist from origin
         min_height = 1.0
         max_height = 2.0
         min_horizontal_speed = 0
@@ -225,33 +243,45 @@ class BallBalanceTask(RLTask):
         ball_velocities[env_ids_64, 3:6] = 0
 
         # reset root state for bbots and balls in selected envs
-        self._balance_bots.set_world_poses(self.initial_bot_pos[env_ids_64], self.initial_bot_rot[env_ids_64].clone(), indices=env_ids_32)
         self._balls.set_world_poses(ball_pos[env_ids_64], ball_rot[env_ids_64], indices=env_ids_32)
         self._balls.set_velocities(ball_velocities[env_ids_64], indices=env_ids_32)
 
+        # reset root pose and velocity
+        self._balance_bots.set_world_poses(
+            self.initial_bot_pos[env_ids_64].clone(), self.initial_bot_rot[env_ids_64].clone(), indices=env_ids_32
+        )
+        self._balance_bots.set_velocities(self.initial_bot_velocities[env_ids_64].clone(), indices=env_ids_32)
+
         # reset DOF states for bbots in selected envs
-        self._balance_bots.set_joint_positions(self.initial_dof_positions.clone()[env_ids_64], indices=env_ids_32)
+        self._balance_bots.set_joint_positions(self.initial_dof_positions[env_ids_64].clone(), indices=env_ids_32)
 
         # bookkeeping
         self.reset_buf[env_ids] = 0
         self.progress_buf[env_ids] = 0
 
     def post_reset(self):
-        
         dof_limits = self._balance_bots.get_dof_limits()
         self.bbot_dof_lower_limits, self.bbot_dof_upper_limits = torch.t(dof_limits[0].to(device=self._device))
 
-        self.initial_dof_positions = self._balance_bots.get_joint_positions(clone=False)
-        self.initial_bot_pos, self.initial_bot_rot = self._balance_bots.get_world_poses(clone=False)
-        self.initial_bot_pos[..., 2] = 0.559  # tray_height
-        self.initial_ball_pos, self.initial_ball_rot = self._balls.get_world_poses(clone=False)
-        self.initial_ball_velocities = self._balls.get_velocities().clone()
+        self.initial_dof_positions = self._balance_bots.get_joint_positions()
+        self.initial_bot_pos, self.initial_bot_rot = self._balance_bots.get_world_poses()
+        # self.initial_bot_pos[..., 2] = 0.559  # tray_height
+        self.initial_bot_velocities = self._balance_bots.get_velocities()
+        self.initial_ball_pos, self.initial_ball_rot = self._balls.get_world_poses()
+        self.initial_ball_velocities = self._balls.get_velocities()
 
         self.dof_position_targets = torch.zeros(
             (self.num_envs, self._balance_bots.num_dof), dtype=torch.float32, device=self._device, requires_grad=False
         )
 
-        self.actuated_dof_indices = torch.LongTensor([3, 4, 5]).to(self._device)
+        actuated_joints = ["lower_leg0", "lower_leg1", "lower_leg2"]
+        self.actuated_dof_indices = torch.tensor(
+            [self._balance_bots._dof_indices[j] for j in actuated_joints], device=self._device, dtype=torch.long
+        )
+        force_links = ["upper_leg0", "upper_leg1", "upper_leg2"]
+        self._sensor_indices = torch.tensor(
+            [self._balance_bots._body_indices[j] for j in force_links], device=self._device, dtype=torch.long
+        )
 
     def calculate_metrics(self) -> None:
         ball_dist = torch.sqrt(
@@ -272,5 +302,7 @@ class BallBalanceTask(RLTask):
         reset = torch.where(
             self.progress_buf >= self._max_episode_length - 1, torch.ones_like(self.reset_buf), self.reset_buf
         )
-        reset = torch.where(self.ball_positions[..., 2] < self._ball_radius * 1.5, torch.ones_like(self.reset_buf), reset)
+        reset = torch.where(
+            self.ball_positions[..., 2] < self._ball_radius * 1.5, torch.ones_like(self.reset_buf), reset
+        )
         self.reset_buf[:] = reset
